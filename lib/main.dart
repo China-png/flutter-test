@@ -3,12 +3,15 @@ import 'screens/home_screen.dart';
 import 'package:provider/provider.dart';
 import 'models/app_data.dart';
 
-void main() {
+Future<void> main() async {
+
+  WidgetsFlutterBinding.ensureInitialized();
+
   runApp(
     ChangeNotifierProvider(
-      create: (context) =>AppData(),
-      child: const MyApp()
-    )
+      create: (context) => AppData(),
+      child: const MyApp(),
+    ),
   );
 }
 
@@ -23,4 +26,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
