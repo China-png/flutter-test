@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppData extends ChangeNotifier{
+
   final SharedPreferences prefs; // Добавляем поле для хранения пульта управления
 
   List<String> _fruits = ['Apple', 'Orange']; // Делаем список приватным
@@ -22,23 +23,26 @@ class AppData extends ChangeNotifier{
   List<String> get fruits => _fruits; // Геттер для доступа извне
   int get counter => _counter;
 
-  void addFruit(String name){
+  void addFruit (String name) async{
     _fruits.add(name);
     notifyListeners();
+    await prefs.setStringList('items', _fruits);
     // Когда ты вызываешь notifyListeners(), происходит следующее:
     // 1) Провайдер понимает, что данные внутри изменились.
     // 2) Он находит все виджеты, которые «слушают» этот класс (например, твой список фруктов).
     // 3) Он заставляет эти виджеты перерисоваться с новыми данными.
   }
 
-  void incrementCounter () {
+  void incrementCounter () async{
     _counter++;
     notifyListeners();
+    await prefs.setInt('counter', _counter);
   }
 
-  void removeFruit(int index) {
+  void removeFruit(int index) async{
     _fruits.removeAt(index);
     notifyListeners();
+    await prefs.setStringList('items', _fruits);
   }
 }
 
