@@ -1,8 +1,23 @@
 import 'package:flutter/cupertino.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppData extends ChangeNotifier{
+  final SharedPreferences prefs; // Добавляем поле для хранения пульта управления
+
   List<String> _fruits = ['Apple', 'Orange']; // Делаем список приватным
   int _counter = 0;
+
+  // Конструктор теперь принимает prefs и может сразу загрузить данные
+  AppData(this.prefs){
+    _loadData();
+  }
+
+  void _loadData(){
+    // Используем наш оператор ?? для установки значений по умолчанию
+    _fruits = prefs.getStringList('items') ?? ['Apple', 'Orange'];
+    _counter = prefs.getInt('counter') ?? 0;
+    notifyListeners();
+  }
 
   List<String> get fruits => _fruits; // Геттер для доступа извне
   int get counter => _counter;

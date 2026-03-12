@@ -19,7 +19,7 @@ Future<void> main() async {
 
   runApp(
     ChangeNotifierProvider(
-      create: (context) => AppData(),
+      create: (context) => AppData(prefs),
       child: const MyApp(),
     ),
   );
