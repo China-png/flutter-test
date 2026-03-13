@@ -7,21 +7,35 @@ class AppData extends ChangeNotifier{
 
   List<String> _fruits = ['Apple', 'Orange']; // Делаем список приватным
   int _counter = 0;
+  bool _isloading = true; // Переменная что бы проверять пришли ли данные из http запроса
+
+  List<String> get fruits => _fruits; // Геттер для доступа извне
+  int get counter => _counter;
+  bool get isLoading => _isloading;
 
   // Конструктор теперь принимает prefs и может сразу загрузить данные
   AppData(this.prefs){
     _loadData();
   }
 
-  void _loadData(){
+  void _loadData() async{
+    _isloading = true; // 1. Ставим флаг "Загрузка..."
+    notifyListeners();
+
+    // 2. Сначала быстро берем старые данные из памяти
     // Используем наш оператор ?? для установки значений по умолчанию
     _fruits = prefs.getStringList('items') ?? ['Apple', 'Orange'];
     _counter = prefs.getInt('counter') ?? 0;
+
+    // 3. (Тут в будущем будет запрос к ApiService)
+    // Ждем имитацию сетевого запроса (например, 2 секунды)
+    await Future.delayed(Duration(seconds: 2));
+
+    _isloading = false; // 4. Загрузка завершена! 🎉
     notifyListeners();
   }
 
-  List<String> get fruits => _fruits; // Геттер для доступа извне
-  int get counter => _counter;
+
 
   void addFruit (String name) async{
     _fruits.add(name);
