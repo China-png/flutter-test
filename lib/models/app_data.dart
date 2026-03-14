@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tester_app/service/api_service.dart';
 
 class AppData extends ChangeNotifier{
 
@@ -7,21 +8,50 @@ class AppData extends ChangeNotifier{
 
   List<String> _fruits = ['Apple', 'Orange']; // Делаем список приватным
   int _counter = 0;
+  bool _isloading = true; // Переменная что бы проверять пришли ли данные из http запроса
+  final ApiService _apiService = ApiService();
+
+  List<String> get fruits => _fruits; // Геттер для доступа извне
+  int get counter => _counter;
+  bool get isLoading => _isloading;
 
   // Конструктор теперь принимает prefs и может сразу загрузить данные
   AppData(this.prefs){
     _loadData();
   }
 
-  void _loadData(){
-    // Используем наш оператор ?? для установки значений по умолчанию
-    _fruits = prefs.getStringList('items') ?? ['Apple', 'Orange'];
-    _counter = prefs.getInt('counter') ?? 0;
+  void _loadData() async{
+    _isloading = true; // 1. Ставим флаг "Загрузка..."
     notifyListeners();
+    // Переменная _isLoading помогает нам управлять вниманием пользователя:
+    // Когда _isLoading == true: Мы говорим интерфейсу: «Покажи крутилку поверх данных или вместо них. Мы сейчас связываемся с сервером!». 🔄
+    // Когда _isLoading == false: Мы говорим: «Всё, курьер приехал, данные самые свежие, можно убирать индикатор загрузки». ✅
+
+    try {
+      // 2. Сначала быстро берем старые данные из памяти
+      // Используем наш оператор ?? для установки значений по умолчанию
+      _fruits = prefs.getStringList('items') ?? ['Apple', 'Orange'];
+      _counter = prefs.getInt('counter') ?? 0;
+      notifyListeners();
+
+      // Делаем реальный запрос в интернет
+      List<String> networkFruits = await _apiService.getFruits();
+
+      // Если запрос успешен, обновляем список и сохраняем его в локальную память
+      _fruits = networkFruits;
+      await prefs.setStringList('items', _fruits);
+    } catch (e) {
+      // Если интернета нет или сервер выдал ошибку
+      print('Error Loading: $e');
+      // Здесь можно оставить старые данные из SharedPreferences
+    } finally {
+      // В любом случае выключаем крутилку
+      _isloading = false;
+      notifyListeners();
+    }
   }
 
-  List<String> get fruits => _fruits; // Геттер для доступа извне
-  int get counter => _counter;
+
 
   void addFruit (String name) async{
     _fruits.add(name);
