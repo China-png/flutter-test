@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tester_app/service/api_service.dart';
 
 class AppData extends ChangeNotifier{
 
@@ -8,6 +9,7 @@ class AppData extends ChangeNotifier{
   List<String> _fruits = ['Apple', 'Orange']; // Делаем список приватным
   int _counter = 0;
   bool _isloading = true; // Переменная что бы проверять пришли ли данные из http запроса
+  final ApiService _apiService = ApiService();
 
   List<String> get fruits => _fruits; // Геттер для доступа извне
   int get counter => _counter;
@@ -25,17 +27,28 @@ class AppData extends ChangeNotifier{
     // Когда _isLoading == true: Мы говорим интерфейсу: «Покажи крутилку поверх данных или вместо них. Мы сейчас связываемся с сервером!». 🔄
     // Когда _isLoading == false: Мы говорим: «Всё, курьер приехал, данные самые свежие, можно убирать индикатор загрузки». ✅
 
-    // 2. Сначала быстро берем старые данные из памяти
-    // Используем наш оператор ?? для установки значений по умолчанию
-    _fruits = prefs.getStringList('items') ?? ['Apple', 'Orange'];
-    _counter = prefs.getInt('counter') ?? 0;
+    try {
+      // 2. Сначала быстро берем старые данные из памяти
+      // Используем наш оператор ?? для установки значений по умолчанию
+      _fruits = prefs.getStringList('items') ?? ['Apple', 'Orange'];
+      _counter = prefs.getInt('counter') ?? 0;
+      notifyListeners();
 
-    // 3. (Тут в будущем будет запрос к ApiService)
-    // Ждем имитацию сетевого запроса (например, 2 секунды)
-    await Future.delayed(Duration(seconds: 2));
+      // Делаем реальный запрос в интернет
+      List<String> networkFruits = await _apiService.getFruits();
 
-    _isloading = false; // 4. Загрузка завершена! 🎉
-    notifyListeners();
+      // Если запрос успешен, обновляем список и сохраняем его в локальную память
+      _fruits = networkFruits;
+      await prefs.setStringList('items', _fruits);
+    } catch (e) {
+      // Если интернета нет или сервер выдал ошибку
+      print('Error Loading: $e');
+      // Здесь можно оставить старые данные из SharedPreferences
+    } finally {
+      // В любом случае выключаем крутилку
+      _isloading = false;
+      notifyListeners();
+    }
   }
 
 
