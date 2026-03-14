@@ -24,7 +24,9 @@ class _SecondScreenState extends State<SecondScreen>{
         title: Text('SecondScreen', style: TextStyle(fontSize: 20)),
         backgroundColor: Colors.blue,
       ),
-      body: ListView.builder(
+      body: appData.isLoading
+        ? Center(child: CircularProgressIndicator()) // тернарный оператор условие ? виджет1 : виджет2 (if else)
+          : ListView.builder(
           itemCount: appData.fruits.length,
           itemBuilder: (context, index) {
             return ListTile(

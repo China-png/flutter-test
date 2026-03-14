@@ -37,7 +37,9 @@ class _HomeScreenState extends State<HomeScreen>{
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
+            appData.isLoading
+            ? Center(child: CircularProgressIndicator())
+            : TextField(
               controller: _controller,
               decoration: InputDecoration(
                 labelText: 'Enter fruits name',
@@ -45,7 +47,9 @@ class _HomeScreenState extends State<HomeScreen>{
               ),
             ),
             SizedBox(height: 10),
-            ElevatedButton(
+            appData.isLoading
+            ? Center(child: CircularProgressIndicator())
+            : ElevatedButton(
                 onPressed: () {
                   appData1.addFruit(_controller.text);
                   _controller.clear();
@@ -66,7 +70,9 @@ class _HomeScreenState extends State<HomeScreen>{
                 }
                 ),
             SizedBox(height: 20),
-            LabelButtonRow(
+            appData.isLoading
+            ? Center(child: CircularProgressIndicator())
+            : LabelButtonRow(
                 label: 'Counter: ${appData.counter}',
                 buttonText: '+1',
                 onPressed: () {
