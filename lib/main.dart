@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/home_screen.dart';
 import 'package:provider/provider.dart';
 import 'models/app_data.dart';
@@ -9,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 Future<void> main() async {
   // нам нужно убедиться, что "движок" Flutter готов к общению с операционной системой телефона. Для этого первой строчкой в main обычно пишут:
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(url: "https://zqsttszdpmjnfxoseoqm.supabase.co", anonKey: "sb_publishable_ZlUsB7-ZUHOFJ3S9cpx7cQ_wAq61GlY");
 
   final prefs = await SharedPreferences.getInstance();
   // prefs контроллер для работы с локальными данными

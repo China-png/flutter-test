@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tester_app/service/api_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppData extends ChangeNotifier{
 
+  final supabase = Supabase.instance.client;
   final SharedPreferences prefs; // Добавляем поле для хранения пульта управления
 
   List<String> _fruits = ['Apple', 'Orange']; // Делаем список приватным
@@ -30,16 +32,18 @@ class AppData extends ChangeNotifier{
     try {
       // 2. Сначала быстро берем старые данные из памяти
       // Используем наш оператор ?? для установки значений по умолчанию
-      _fruits = prefs.getStringList('items') ?? ['Apple', 'Orange'];
+      _fruits = prefs.getStringList('items') ?? [];
       _counter = prefs.getInt('counter') ?? 0;
       notifyListeners();
 
       // Делаем реальный запрос в интернет
-      List<String> networkFruits = await _apiService.getFruits();
+      final response = supabase.from('fruits').select('name').order('created_at', ascending: true);
 
       // Если запрос успешен, обновляем список и сохраняем его в локальную память
-      _fruits = networkFruits;
-      await prefs.setStringList('items', _fruits);
+      _fruits = (response as List).map((e) => e['name'].toString()).toList();
+
+      await prefs.setStringList('items', _fruits); //
+
     } catch (e) {
       // Если интернета нет или сервер выдал ошибку
       print('Error Loading: $e');
@@ -51,11 +55,10 @@ class AppData extends ChangeNotifier{
     }
   }
 
-
-
   void addFruit (String name) async{
     _fruits.add(name);
     notifyListeners();
+    await supabase.from('fruits').insert({'name': name});
     await prefs.setStringList('items', _fruits);
     // Когда ты вызываешь notifyListeners(), происходит следующее:
     // 1) Провайдер понимает, что данные внутри изменились.
@@ -70,8 +73,10 @@ class AppData extends ChangeNotifier{
   }
 
   void removeFruit(int index) async{
+    final name = _fruits[index];
     _fruits.removeAt(index);
     notifyListeners();
+    await supabase.from('fruits').delete().eq('name', name);  // удаляем из БД
     await prefs.setStringList('items', _fruits);
   }
 }
