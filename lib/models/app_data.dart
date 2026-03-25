@@ -30,7 +30,7 @@ class AppData extends ChangeNotifier{
       notifyListeners();
 
       // Тянем актуальные данные из Supabase
-      final response = await supabase.from('fruits').select('name').order('created_at', ascending: true);
+      final response = await supabase.from('fruits').select('id, name').order('created_at', ascending: true);
 
       _fruits = (response as List).map((e) => e['name'].toString()).toList();
 
