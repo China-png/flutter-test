@@ -2,16 +2,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tester_app/service/api_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'fruits.dart';
+import 'dart:convert';
 
 class AppData extends ChangeNotifier{
   final supabase = Supabase.instance.client;
   final SharedPreferences prefs;
 
-  List<String> _fruits = [];
+  List<Fruits> _fruits = [];
   int _counter = 0;
   bool _isLoading = true;
 
-  List<String> get fruits => _fruits;
+  List<Fruits> get fruits => _fruits;
   int get counter => _counter;
   bool get isLoading => _isLoading;
 
@@ -19,22 +21,36 @@ class AppData extends ChangeNotifier{
     _loadData();
   }
 
-  void _loadData() async{
+  // Универсальный метод для сохранения текущего списка в память
+  Future<void> _saveToPrefs() async {
+    final List<String> stringList = _fruits.map((item) => jsonEncode(item.toMap())).toList();
+    await prefs.setStringList('items', stringList);
+  }
+
+  Future<void> _loadData() async{
     _isLoading = true;
     notifyListeners();
 
     try{
-      // Быстро берём кэш из SharedPreferences
-      _fruits = prefs.getStringList('items') ?? [];
+      // 1. Получаем список строк из памяти (или пустой список, если там ничего нет)
+      List<String> savedSting = prefs.getStringList('items') ?? [];
+      // 2. Превращаем каждую строку обратно в объект Fruits
+      _fruits = savedSting.map((item) {
+        // Декодируем строку в карту (Map)
+        Map<String, dynamic> fruitMap = jsonDecode(item);
+        // Создаем объект из этой карты
+        return Fruits.fromMap(fruitMap);
+      }).toList();
       _counter = prefs.getInt('counter') ?? 0;
       notifyListeners();
 
       // Тянем актуальные данные из Supabase
       final response = await supabase.from('fruits').select('id, name').order('created_at', ascending: true);
 
-      _fruits = (response as List).map((e) => e['name'].toString()).toList();
+      //_fruits = (response as List).map((e) => e['name'].toString()).toList();
+      _fruits = (response as List).map((item) => Fruits.fromMap(item)).toList();
 
-      await prefs.setStringList('items', _fruits);
+      _saveToPrefs();
     } catch(e) {
       print('Eror loading');
     } finally {
@@ -43,11 +59,13 @@ class AppData extends ChangeNotifier{
     }
   }
 
-  void addFruit(String name) async{
-    _fruits.add(name);
-    notifyListeners();;
+  void addFruit(String name) async {
+    // 1. Отправляем новое имя в базу
     await supabase.from('fruits').insert({'name': name});
-    await prefs.setStringList('items', _fruits);
+
+    // 2. Просто просим приложение перекачать обновленный список
+    // Это само обновит _fruits, вызовет notifyListeners() и сохранит кэш
+    await _loadData();
   }
 
   void incrementCounter() async{
@@ -57,11 +75,12 @@ class AppData extends ChangeNotifier{
   }
 
   void removeFruit(int index) async {
-    final name = _fruits[index];
+    final List<String> stringList = _fruits.map((item) => jsonEncode(item.toMap())).toList();
+    final id = _fruits[index].id;
     _fruits.removeAt(index);
     notifyListeners();
-    await supabase.from('fruits').delete().eq('name', name);
-    await prefs.setStringList('items', _fruits);
+    await supabase.from('fruits').delete().eq('id', id);
+    await prefs.setStringList('items', stringList);
   }
 }
 
