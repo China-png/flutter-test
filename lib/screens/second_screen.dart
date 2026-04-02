@@ -31,7 +31,7 @@ class _SecondScreenState extends State<SecondScreen>{
           itemBuilder: (context, index) {
             return ListTile(
               leading: Icon(Icons.accessible_forward_sharp, size: 20),
-              title: Text('${appData.fruits[index]}'),
+              title: Text('${appData.fruits[index].name}'),
               subtitle: Text('index in fruits: $index'),
               trailing: IconButton(
                   onPressed: () {

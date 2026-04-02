@@ -17,10 +17,7 @@ class ApiService{
       List<dynamic> data = json.decode(response.body); // decode нужен так как данные приходят в виде одной длинной строки а decode упорядочивает все
       // После того как json.decode превратил текст в «понятный» для Dart объект (обычно это List или Map),
       // нам нужно убедиться, что каждый элемент внутри — это именно строка. Поэтому мы используем:
-      return data.map((item) {
-        String title = item['title'].toString();
-        return title[0].toUpperCase() + title.substring(1);
-      }).toList();
+      return data.map((item) => item['name'].toString()).toList();
     }
     else {
       print('Ошибка сервера: ${response.statusCode}');
